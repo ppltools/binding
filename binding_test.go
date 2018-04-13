@@ -678,7 +678,7 @@ func testFormBindingForTimeFailLocation(t *testing.T, method, path, badPath, bod
 		req.Header.Add("Content-Type", MIMEPOSTForm)
 	}
 	err := b.Bind(req, &obj)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 
 	obj = FooStructForTimeTypeFailLocation{}
 	req = requestWithBody(method, badPath, badBody)
