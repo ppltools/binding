@@ -5,6 +5,7 @@
 package binding
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"strconv"
@@ -59,6 +60,19 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 				}
 				continue
 			}
+
+			// support nested struct for GET method, as well as for Content-Type of
+			// application/x-www-form-urlencoded, multipart/form-data
+			if structFieldKind == reflect.Struct {
+				temp := reflect.New(typeField.Type).Interface()
+				err := json.Unmarshal([]byte(inputValue[0]), &temp)
+				if err != nil {
+					return err
+				}
+				structField.Set(reflect.ValueOf(temp).Elem())
+				continue
+			}
+
 			if err := setWithProperType(typeField.Type.Kind(), inputValue[0], structField); err != nil {
 				return err
 			}
