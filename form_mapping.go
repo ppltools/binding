@@ -43,6 +43,16 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			continue
 		}
 
+		// handle ptr field of struct
+		if structFieldKind == reflect.Ptr {
+			if structField.IsNil() {
+				structField.Set(reflect.New(typeField.Type.Elem()))
+			}
+			structField = structField.Elem()
+			structFieldKind = structField.Kind()
+			typeField.Type = typeField.Type.Elem()
+		}
+
 		numElems := len(inputValue)
 		if structFieldKind == reflect.Slice && numElems > 0 {
 			sliceOf := structField.Type().Elem().Kind()
