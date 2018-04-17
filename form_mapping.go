@@ -53,46 +53,22 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			typeField.Type = typeField.Type.Elem()
 		}
 
-		numElems := len(inputValue)
-		if structFieldKind == reflect.Slice && numElems > 0 {
-			sliceOf := structField.Type().Elem().Kind()
-			slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
-			for i := 0; i < numElems; i++ {
-				if err := setWithProperType(sliceOf, inputValue[i], slice.Index(i)); err != nil {
-					return err
-				}
-			}
-			val.Field(i).Set(slice)
-		} else {
-			if _, isTime := structField.Interface().(time.Time); isTime {
-				if err := setTimeField(inputValue[0], typeField, structField); err != nil {
-					return err
-				}
-				continue
-			}
-
-			// support nested struct for GET method, as well as for Content-Type of
-			// application/x-www-form-urlencoded, multipart/form-data
-			if structFieldKind == reflect.Struct {
-				temp := reflect.New(typeField.Type).Interface()
-				err := json.Unmarshal([]byte(inputValue[0]), &temp)
-				if err != nil {
-					return err
-				}
-				structField.Set(reflect.ValueOf(temp).Elem())
-				continue
-			}
-
-			if err := setWithProperType(typeField.Type.Kind(), inputValue[0], structField); err != nil {
+		if _, isTime := structField.Interface().(time.Time); isTime {
+			if err := setTimeField(inputValue[0], typeField, structField); err != nil {
 				return err
 			}
+			continue
+		}
+
+		if err := setWithProperType(typeField.Type, inputValue[0], structField); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value) error {
-	switch valueKind {
+func setWithProperType(valueType reflect.Type, val string, structField reflect.Value) error {
+	switch valueType.Kind() {
 	case reflect.Int:
 		return setIntField(val, 0, structField)
 	case reflect.Int8:
@@ -121,6 +97,8 @@ func setWithProperType(valueKind reflect.Kind, val string, structField reflect.V
 		return setFloatField(val, 64, structField)
 	case reflect.String:
 		structField.SetString(val)
+	case reflect.Struct, reflect.Map, reflect.Slice, reflect.Array:
+		return setJSONField(val, valueType, structField)
 	default:
 		return errors.New("Unknown type")
 	}
@@ -201,5 +179,17 @@ func setTimeField(val string, structField reflect.StructField, value reflect.Val
 	}
 
 	value.Set(reflect.ValueOf(t))
+	return nil
+}
+
+// support nested struct/map/slice for GET method, as well as for Content-Type of
+// application/x-www-form-urlencoded, multipart/form-data
+func setJSONField(val string, valueType reflect.Type, field reflect.Value) error {
+	temp := reflect.New(valueType).Interface()
+	err := json.Unmarshal([]byte(val), &temp)
+	if err != nil {
+		return err
+	}
+	field.Set(reflect.ValueOf(temp).Elem())
 	return nil
 }
