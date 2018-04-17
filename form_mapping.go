@@ -25,6 +25,9 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 		structFieldKind := structField.Kind()
 		inputFieldName := typeField.Tag.Get("form")
 		if inputFieldName == "" {
+			inputFieldName = typeField.Tag.Get("json")
+		}
+		if inputFieldName == "" {
 			inputFieldName = typeField.Name
 
 			// if "form" tag is nil, we inspect if the field is a struct.
