@@ -48,7 +48,7 @@ type FooStructForTimeTypeFailFormat struct {
 }
 
 type FooStructForTimeTypeFailLocation struct {
-	TimeFoo time.Time `form:"time_foo" time_format:"2006-01-02" time_location:"/asia/chongqing"`
+	TimeFoo time.Time `form:"time_foo" time_format:"2006-01-02" time_location:"Africa/chongqing"`
 }
 
 type FooStructForMapType struct {
@@ -678,7 +678,7 @@ func testFormBindingForTimeFailLocation(t *testing.T, method, path, badPath, bod
 		req.Header.Add("Content-Type", MIMEPOSTForm)
 	}
 	err := b.Bind(req, &obj)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 
 	obj = FooStructForTimeTypeFailLocation{}
 	req = requestWithBody(method, badPath, badBody)
