@@ -878,8 +878,7 @@ func testFormBindingForType(t *testing.T, method, path, badPath, body, badBody s
 	case "Slice":
 		obj := FooStructForSliceType{}
 		err := b.Bind(req, &obj)
-		assert.NoError(t, err)
-		assert.Equal(t, obj.SliceFoo, []int{1, 2})
+		assert.Error(t, err)
 
 		obj = FooStructForSliceType{}
 		req = requestWithBody(method, badPath, badBody)

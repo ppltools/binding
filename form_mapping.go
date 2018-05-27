@@ -9,6 +9,7 @@ import (
 	"errors"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,10 +23,13 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			continue
 		}
 
+		// get default value
+		inputFieldDefault := typeField.Tag.Get("default")
+
 		structFieldKind := structField.Kind()
-		inputFieldName := typeField.Tag.Get("form")
+		inputFieldName := typeField.Tag.Get("json")
 		if inputFieldName == "" {
-			inputFieldName = typeField.Tag.Get("json")
+			inputFieldName = typeField.Tag.Get("form")
 		}
 		if inputFieldName == "" {
 			inputFieldName = typeField.Name
@@ -41,8 +45,18 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 				continue
 			}
 		}
+		// omit field
+		if strings.HasPrefix(inputFieldName, "-") {
+			continue
+		}
 		inputValue, exists := form[inputFieldName]
 		if !exists {
+			if inputFieldDefault == "" {
+				continue
+			}
+			if err := setWithProperType(typeField.Type, inputFieldDefault, structField); err != nil {
+				return err
+			}
 			continue
 		}
 
