@@ -49,6 +49,9 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 		if strings.HasPrefix(inputFieldName, "-") {
 			continue
 		}
+		if idx := strings.Index(inputFieldName, ","); idx != -1 {
+			inputFieldName = inputFieldName[:idx]
+		}
 		inputValue, exists := form[inputFieldName]
 		if !exists {
 			if inputFieldDefault == "" {
