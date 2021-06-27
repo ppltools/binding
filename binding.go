@@ -6,6 +6,7 @@ package binding
 
 import (
 	"net/http"
+	"strings"
 )
 
 const (
@@ -71,7 +72,7 @@ func Default(method, contentType string) Binding {
 		return Form
 	}
 
-	switch contentType {
+	switch getContentType(contentType) {
 	case MIMEJSON:
 		return JSON
 	case MIMEXML, MIMEXML2:
@@ -90,4 +91,12 @@ func validate(obj interface{}) error {
 		return nil
 	}
 	return Validator.ValidateStruct(obj)
+}
+
+func getContentType(ctype string) string {
+	typeSplits := strings.Split(ctype, ";")
+	if len(typeSplits) > 1 {
+		return typeSplits[0]
+	}
+	return ctype
 }
